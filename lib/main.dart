@@ -25,6 +25,7 @@ class RiddleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'My Riddles',
       theme: ThemeData(
         useMaterial3: true,
@@ -321,10 +322,14 @@ class _RiddleHomePageState extends State<RiddleHomePage>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 1),
       vsync: this,
-    )..repeat(reverse: true);
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    );
+    _animation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    _controller.repeat(reverse: true);
   }
 
   @override
@@ -371,11 +376,11 @@ class _RiddleHomePageState extends State<RiddleHomePage>
               AnimatedBuilder(
                 animation: _animation,
                 builder: (context, child) {
-                  return Transform.rotate(
-                    angle: _animation.value * 2 * pi,
+                  return Transform.scale(
+                    scale: _animation.value,
                     child: Icon(
                       Icons.psychology,
-                      size: 100 + (_animation.value * 20),
+                      size: 100,
                       color: Colors.white.withOpacity(0.8),
                     ),
                   );
@@ -425,11 +430,122 @@ class _RiddlePageState extends State<RiddlePage>
       'answer': 'A map',
     },
     {
-      'question':
-          'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
-      'answer': 'A map',
+      'question': 'What has keys but can\'t open locks?',
+      'answer': 'A piano',
     },
-    // Add more riddles here
+    {
+      'question': 'What has a heart that doesn\'t beat?',
+      'answer': 'An artichoke',
+    },
+    {
+      'question':
+          'What comes once in a minute, twice in a moment, but never in a thousand years?',
+      'answer': 'The letter M',
+    },
+    {
+      'question': 'What has a neck but no head?',
+      'answer': 'A bottle',
+    },
+    {
+      'question': 'What can travel around the world while staying in a corner?',
+      'answer': 'A stamp',
+    },
+    {
+      'question': 'What has an eye but cannot see?',
+      'answer': 'A needle',
+    },
+    {
+      'question': 'What gets wetter as it dries?',
+      'answer': 'A towel',
+    },
+    {
+      'question': 'What has a thumb and four fingers but is not alive?',
+      'answer': 'A glove',
+    },
+    {
+      'question': 'What has to be broken before you can use it?',
+      'answer': 'An egg',
+    },
+    {
+      'question': 'What has a bed but never sleeps?',
+      'answer': 'A river',
+    },
+    {
+      'question': 'What has a head, a tail, is brown, and has no legs?',
+      'answer': 'A penny',
+    },
+    {
+      'question': 'What has many keys but can\'t open a single lock?',
+      'answer': 'A keyboard',
+    },
+    {
+      'question': 'What has hands but can\'t clap?',
+      'answer': 'A clock',
+    },
+    {
+      'question': 'What has one eye but can\'t see?',
+      'answer': 'A needle',
+    },
+    {
+      'question': 'What has a ring but no finger?',
+      'answer': 'A telephone',
+    },
+    {
+      'question': 'What has a face and two hands but no arms or legs?',
+      'answer': 'A clock',
+    },
+    {
+      'question': 'What has a bottom at the top?',
+      'answer': 'A leg',
+    },
+    {
+      'question': 'What has teeth but can\'t bite?',
+      'answer': 'A comb',
+    },
+    {
+      'question': 'What has words but never speaks?',
+      'answer': 'A book',
+    },
+    {
+      'question': 'What has a spine but no bones?',
+      'answer': 'A book',
+    },
+    {
+      'question': 'What has a bark but no bite?',
+      'answer': 'A tree',
+    },
+    {
+      'question': 'What has a foot but no legs?',
+      'answer': 'A ruler',
+    },
+    {
+      'question': 'What has a face but no eyes, nose, or mouth?',
+      'answer': 'A clock',
+    },
+    {
+      'question': 'What has a head, a tail, is brown, and has no legs?',
+      'answer': 'A penny',
+    },
+    {
+      'question': 'What has a ring but no finger?',
+      'answer': 'A telephone',
+    },
+    {
+      'question': 'What has a bed but never sleeps?',
+      'answer': 'A river',
+    },
+    {
+      'question': 'What has a neck but no head?',
+      'answer': 'A bottle',
+    },
+    {
+      'question': 'What has a heart that doesn\'t beat?',
+      'answer': 'An artichoke',
+    },
+    {
+      'question': 'What has keys but can\'t open locks?',
+      'answer': 'A piano',
+    },
   ];
 
   @override
