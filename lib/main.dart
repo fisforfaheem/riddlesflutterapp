@@ -30,11 +30,13 @@ class RiddleApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
+          seedColor: Colors.deepOrange,
+          brightness: Brightness.light,
+          primary: Colors.deepOrange,
+          secondary: Colors.deepPurple,
         ),
       ),
-      home: showOnboarding ? const OnboardingScreen() : const MainScreen(),
+      home: showOnboarding ? const OnboardingScreen() : const SplashScreen(),
     );
   }
 }
@@ -51,6 +53,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const RiddleHomePage(),
     const RiddlePage(),
+    const FavoritesPage(),
     const MorePage(),
   ];
 
@@ -65,6 +68,7 @@ class _MainScreenState extends State<MainScreen> {
             _currentIndex = index;
           });
         },
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -73,6 +77,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.psychology),
             label: 'Riddles',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -266,7 +274,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Future.delayed(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        MaterialPageRoute(builder: (_) => const MainScreen()),
       );
     });
   }
@@ -344,7 +352,7 @@ class _RiddleHomePageState extends State<RiddleHomePage>
       extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const Text('My Riddles'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         actions: const [
           // IconButton(
@@ -364,8 +372,8 @@ class _RiddleHomePageState extends State<RiddleHomePage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.deepPurple.withOpacity(0.8),
-              Colors.black.withOpacity(0.8),
+              Colors.indigo.withOpacity(0.8),
+              Colors.deepOrange.withOpacity(0.8),
             ],
           ),
         ),
@@ -373,20 +381,43 @@ class _RiddleHomePageState extends State<RiddleHomePage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              AnimatedBuilder(
-                animation: _animation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _animation.value,
-                    child: Icon(
-                      Icons.psychology,
-                      size: 100,
-                      color: Colors.white.withOpacity(0.8),
-                    ),
-                  );
+              ShaderMask(
+                shaderCallback: (Rect bounds) {
+                  return const LinearGradient(
+                    colors: [Colors.amber, Colors.deepOrange],
+                  ).createShader(bounds);
                 },
+                child: AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Transform.rotate(
+                      angle: _animation.value * 0.1,
+                      child: const Icon(
+                        Icons.lightbulb,
+                        size: 120,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 40),
+              Text(
+                'Ready to Challenge Your Mind?',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 10.0,
+                      color: Colors.black.withOpacity(0.3),
+                      offset: const Offset(2.0, 2.0),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -394,7 +425,22 @@ class _RiddleHomePageState extends State<RiddleHomePage>
                     MaterialPageRoute(builder: (context) => const RiddlePage()),
                   );
                 },
-                child: const Text('Start Riddles'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  'Start Riddles',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo,
+                  ),
+                ),
               ),
             ],
           ),
@@ -417,6 +463,7 @@ class _RiddlePageState extends State<RiddlePage>
   late Animation<double> _animation;
   bool _showAnswer = false;
   int _currentRiddleIndex = 0;
+  Set<int> _favoriteRiddles = {};
 
   final List<Map<String, String>> _riddles = [
     {
@@ -556,6 +603,28 @@ class _RiddlePageState extends State<RiddlePage>
       vsync: this,
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _loadFavorites();
+  }
+
+  void _loadFavorites() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _favoriteRiddles =
+          prefs.getStringList('favoriteRiddles')?.map(int.parse).toSet() ?? {};
+    });
+  }
+
+  void _toggleFavorite() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      if (_favoriteRiddles.contains(_currentRiddleIndex)) {
+        _favoriteRiddles.remove(_currentRiddleIndex);
+      } else {
+        _favoriteRiddles.add(_currentRiddleIndex);
+      }
+    });
+    await prefs.setStringList(
+        'favoriteRiddles', _favoriteRiddles.map((e) => e.toString()).toList());
   }
 
   @override
@@ -589,7 +658,7 @@ class _RiddlePageState extends State<RiddlePage>
       extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const Text('Riddle'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: Container(
@@ -615,9 +684,24 @@ class _RiddlePageState extends State<RiddlePage>
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: _toggleAnswer,
-                  child: Text(_showAnswer ? 'Hide Answer' : 'Show Answer'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _toggleAnswer,
+                      child: Text(_showAnswer ? 'Hide Answer' : 'Show Answer'),
+                    ),
+                    const SizedBox(width: 20),
+                    IconButton(
+                      icon: Icon(
+                        _favoriteRiddles.contains(_currentRiddleIndex)
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: Colors.red,
+                      ),
+                      onPressed: _toggleFavorite,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
                 AnimatedBuilder(
@@ -656,78 +740,141 @@ class MorePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: ListView(padding: const EdgeInsets.all(16.0), children: [
-        ListTile(
-          leading: const Icon(Icons.info, color: Colors.blue),
-          title: const Text(
-            'About ',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              // title: const Text('More Options'),
+              background: Image.asset(
+                'assets/images/playstore.png',
+                fit: BoxFit.scaleDown,
+              ),
+            ),
           ),
-          subtitle: const Text('Learn more about this app'),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AboutPage()),
+          SliverList(
+            delegate: SliverChildListDelegate([
+              _buildCard(
+                context,
+                icon: Icons.info,
+                title: 'About',
+                subtitle: 'Learn more about this app',
+                color: Colors.blue,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutPage()),
+                ),
+              ),
+              _buildCard(
+                context,
+                icon: Icons.privacy_tip,
+                title: 'Privacy Policy',
+                subtitle: 'Read our privacy policy',
+                color: Colors.green,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PrivacyPolicyPage()),
+                ),
+              ),
+              _buildCard(
+                context,
+                icon: Icons.share,
+                title: 'Share',
+                subtitle: 'Share this app',
+                color: Colors.orange,
+                onTap: () {
+                  Share.share(
+                    'Download My Riddles app from Playstore: https://play.google.com/store/apps/details?id=com.example.my_riddles',
+                  );
+                },
+              ),
+              _buildCard(
+                context,
+                icon: Icons.star,
+                title: 'Rate Us',
+                subtitle: 'Rate us on Playstore',
+                color: Colors.red,
+                onTap: () => launchUrlString(
+                  'https://play.google.com/store/apps/details?id=com.example.my_riddles',
+                ),
+              ),
+              _buildCard(
+                context,
+                icon: Icons.question_answer,
+                title: 'FAQs',
+                subtitle: 'Frequently asked questions',
+                color: Colors.purple,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FaqPage()),
+                  );
+                },
+              ),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+            ],
           ),
         ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.privacy_tip, color: Colors.green),
-          title: const Text(
-            'Privacy Policy',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          subtitle: const Text('Read our privacy policy'),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => PrivacyPolicyPage()),
-          ),
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.share, color: Colors.orange),
-          title: const Text(
-            'Share',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          subtitle: const Text('Share this app'),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-          onTap: () {
-            Share.share(
-                'Download My Riddles app from Playstore: https://play.google.com/store/apps/details?id=com.example.my_riddles');
-          },
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.feedback, color: Colors.red),
-          title: const Text(
-            'Rate Us',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          subtitle: const Text('Rate us on Playstore'),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-          onTap: () => launchUrlString(
-              'https://play.google.com/store/apps/details?id=com.example.my_riddles'),
-        ),
-        const Divider(),
-        ListTile(
-          leading: const Icon(Icons.question_answer, color: Colors.green),
-          subtitle: const Text('Frequently asked questions'),
-          title: const Text(
-            'FAQs',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FaqPage()),
-            );
-          },
-        )
-      ]),
+      ),
     );
   }
 }
@@ -858,67 +1005,220 @@ class PrivacyPolicyPage extends StatelessWidget {
   }
 }
 
-// class SettingsPage extends StatelessWidget {
-//   const SettingsPage({super.key});
+class FavoritesPage extends StatefulWidget {
+  const FavoritesPage({super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       extendBodyBehindAppBar: false,
-//       appBar: AppBar(
-//         title: const Text('Settings'),
-//         backgroundColor: Colors.transparent,
-//         elevation: 0,
-//       ),
-//       body: Container(
-//         decoration: BoxDecoration(
-//           gradient: LinearGradient(
-//             begin: Alignment.topLeft,
-//             end: Alignment.bottomRight,
-//             colors: [
-//               Colors.deepPurple.withOpacity(0.8),
-//               Colors.black.withOpacity(0.8),
-//             ],
-//           ),
-//         ),
-//         child: ListView(
-//           padding: const EdgeInsets.all(20.0),
-//           children: [
-//             ListTile(
-//               title: const Text('About'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(builder: (context) => const AboutPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               title: const Text('Privacy Policy'),
-//               onTap: () {
-//                 Navigator.push(
-//                   context,
-//                   MaterialPageRoute(
-//                       builder: (context) => const PrivacyPolicyPage()),
-//                 );
-//               },
-//             ),
-//             ListTile(
-//               title: const Text('Rate App'),
-//               onTap: () {
-//                 // launchUrl(Uri.parse(
-//                 //     'https://play.google.com/store/apps/details?id=your.app.id'));
-//               },
-//             ),
-//             ListTile(
-//               title: const Text('Share App'),
-//               onTap: () {
-//                 // Add your app's sharing logic here
-//               },
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+  @override
+  _FavoritesPageState createState() => _FavoritesPageState();
+}
+
+class _FavoritesPageState extends State<FavoritesPage> {
+  Set<int> _favoriteRiddles = {};
+  final List<Map<String, String>> _riddles = [
+    {
+      'question':
+          'I have a head and a tail that will never meet. Having too many of me is always a treat. What am I?',
+      'answer': 'A coin',
+    },
+    {
+      'question':
+          'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
+      'answer': 'A map',
+    },
+    {
+      'question': 'What has keys but can\'t open locks?',
+      'answer': 'A piano',
+    },
+    {
+      'question': 'What has a heart that doesn\'t beat?',
+      'answer': 'An artichoke',
+    },
+    {
+      'question':
+          'What comes once in a minute, twice in a moment, but never in a thousand years?',
+      'answer': 'The letter M',
+    },
+    {
+      'question': 'What has a neck but no head?',
+      'answer': 'A bottle',
+    },
+    {
+      'question': 'What can travel around the world while staying in a corner?',
+      'answer': 'A stamp',
+    },
+    {
+      'question': 'What has an eye but cannot see?',
+      'answer': 'A needle',
+    },
+    {
+      'question': 'What gets wetter as it dries?',
+      'answer': 'A towel',
+    },
+    {
+      'question': 'What has a thumb and four fingers but is not alive?',
+      'answer': 'A glove',
+    },
+    {
+      'question': 'What has to be broken before you can use it?',
+      'answer': 'An egg',
+    },
+    {
+      'question': 'What has a bed but never sleeps?',
+      'answer': 'A river',
+    },
+    {
+      'question': 'What has a head, a tail, is brown, and has no legs?',
+      'answer': 'A penny',
+    },
+    {
+      'question': 'What has many keys but can\'t open a single lock?',
+      'answer': 'A keyboard',
+    },
+    {
+      'question': 'What has hands but can\'t clap?',
+      'answer': 'A clock',
+    },
+    {
+      'question': 'What has one eye but can\'t see?',
+      'answer': 'A needle',
+    },
+    {
+      'question': 'What has a ring but no finger?',
+      'answer': 'A telephone',
+    },
+    {
+      'question': 'What has a face and two hands but no arms or legs?',
+      'answer': 'A clock',
+    },
+    {
+      'question': 'What has a bottom at the top?',
+      'answer': 'A leg',
+    },
+    {
+      'question': 'What has teeth but can\'t bite?',
+      'answer': 'A comb',
+    },
+    {
+      'question': 'What has words but never speaks?',
+      'answer': 'A book',
+    },
+    {
+      'question': 'What has a spine but no bones?',
+      'answer': 'A book',
+    },
+    {
+      'question': 'What has a bark but no bite?',
+      'answer': 'A tree',
+    },
+    {
+      'question': 'What has a foot but no legs?',
+      'answer': 'A ruler',
+    },
+    {
+      'question': 'What has a face but no eyes, nose, or mouth?',
+      'answer': 'A clock',
+    },
+    {
+      'question': 'What has a head, a tail, is brown, and has no legs?',
+      'answer': 'A penny',
+    },
+    {
+      'question': 'What has a ring but no finger?',
+      'answer': 'A telephone',
+    },
+    {
+      'question': 'What has a bed but never sleeps?',
+      'answer': 'A river',
+    },
+    {
+      'question': 'What has a neck but no head?',
+      'answer': 'A bottle',
+    },
+    {
+      'question': 'What has a heart that doesn\'t beat?',
+      'answer': 'An artichoke',
+    },
+    {
+      'question': 'What has keys but can\'t open locks?',
+      'answer': 'A piano',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  void _loadFavorites() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _favoriteRiddles =
+          prefs.getStringList('favoriteRiddles')?.map(int.parse).toSet() ?? {};
+    });
+  }
+
+  void _removeFavorite(int index) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _favoriteRiddles.remove(index);
+    });
+    await prefs.setStringList(
+        'favoriteRiddles', _favoriteRiddles.map((e) => e.toString()).toList());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Favorite Riddles'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.deepPurple.withOpacity(0.8),
+              Colors.black.withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: _favoriteRiddles.isEmpty
+            ? const Center(
+                child: Text(
+                  'No favorite riddles yet!',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              )
+            : ListView.builder(
+                itemCount: _favoriteRiddles.length,
+                itemBuilder: (context, index) {
+                  int riddleIndex = _favoriteRiddles.elementAt(index);
+                  return Card(
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    color: Colors.white.withOpacity(0.1),
+                    child: ListTile(
+                      title: Text(
+                        _riddles[riddleIndex]['question']!,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      subtitle: Text(
+                        _riddles[riddleIndex]['answer']!,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.favorite, color: Colors.red),
+                        onPressed: () => _removeFavorite(riddleIndex),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
+  }
+}
