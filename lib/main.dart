@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -60,33 +61,27 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
+      bottomNavigationBar: CurvedNavigationBar(
+        backgroundColor: Colors.transparent,
+        color: Theme.of(context).colorScheme.surface,
+        buttonBackgroundColor: Theme.of(context).colorScheme.primary,
+        height: 60,
+        animationDuration: const Duration(milliseconds: 300),
+        animationCurve: Curves.easeInOut,
+        index: _currentIndex,
+        items: const <Widget>[
+          Icon(Icons.home, size: 30),
+          Icon(Icons.psychology, size: 30),
+          Icon(Icons.favorite, size: 30),
+          Icon(Icons.more_horiz, size: 30),
+        ],
         onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.psychology),
-            label: 'Riddles',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'More',
-          ),
-        ],
       ),
     );
   }
@@ -138,7 +133,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.deepPurple.withOpacity(0.8),
+              Colors.deepOrange.withOpacity(0.8),
               Colors.black.withOpacity(0.8),
             ],
           ),
