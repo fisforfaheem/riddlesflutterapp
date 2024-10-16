@@ -1,18 +1,150 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:riddles_app/faq_page.dart';
+
 import 'dart:math';
 
 import 'package:share_plus/share_plus.dart';
+import 'package:ticktobrain/faq_page.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+// Add this list at the top of the file
+final List<Map<String, String>> _riddles = [
+  {
+    'question':
+        'I have a head and a tail that will never meet. Having too many of me is always a treat. What am I?',
+    'answer': 'A coin',
+  },
+  {
+    'question':
+        'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
+    'answer': 'A map',
+  },
+  {
+    'question': 'What has keys but no locks?',
+    'answer': 'A piano',
+  },
+  {
+    'question': 'What has a heart that doesn\'t beat?',
+    'answer': 'An artichoke',
+  },
+  {
+    'question':
+        'What comes once in a minute, twice in a moment, but never in a thousand years?',
+    'answer': 'The letter M',
+  },
+  {
+    'question': 'What has a neck but no head?',
+    'answer': 'A bottle',
+  },
+  {
+    'question': 'What can travel around the world while staying in a corner?',
+    'answer': 'A stamp',
+  },
+  {
+    'question': 'What has an eye but cannot see?',
+    'answer': 'A needle',
+  },
+  {
+    'question': 'What gets wetter as it dries?',
+    'answer': 'A towel',
+  },
+  {
+    'question': 'What has a thumb and four fingers but is not alive?',
+    'answer': 'A glove',
+  },
+  {
+    'question': 'What has to be broken before you can use it?',
+    'answer': 'An egg',
+  },
+  {
+    'question': 'What has a bed but never sleeps?',
+    'answer': 'A river',
+  },
+  {
+    'question': 'What has a head, a tail, is brown, and has no legs?',
+    'answer': 'A penny',
+  },
+  {
+    'question': 'What has many keys but can\'t open a single lock?',
+    'answer': 'A keyboard',
+  },
+  {
+    'question': 'What has hands but can\'t clap?',
+    'answer': 'A clock',
+  },
+  {
+    'question': 'What has one eye but can\'t see?',
+    'answer': 'A needle',
+  },
+  {
+    'question': 'What has a ring but no finger?',
+    'answer': 'A telephone',
+  },
+  {
+    'question': 'What has a face and two hands but no arms or legs?',
+    'answer': 'A clock',
+  },
+  {
+    'question': 'What has a bottom at the top?',
+    'answer': 'A leg',
+  },
+  {
+    'question': 'What has teeth but can\'t bite?',
+    'answer': 'A comb',
+  },
+  {
+    'question': 'What has words but never speaks?',
+    'answer': 'A book',
+  },
+  {
+    'question': 'What has a spine but no bones?',
+    'answer': 'A book',
+  },
+  {
+    'question': 'What has a bark but no bite?',
+    'answer': 'A tree',
+  },
+  {
+    'question': 'What has a foot but no legs?',
+    'answer': 'A ruler',
+  },
+  {
+    'question': 'What has a face but no eyes, nose, or mouth?',
+    'answer': 'A clock',
+  },
+  {
+    'question': 'What has a head, a tail, is brown, and has no legs?',
+    'answer': 'A penny',
+  },
+  {
+    'question': 'What has a ring but no finger?',
+    'answer': 'A telephone',
+  },
+  {
+    'question': 'What has a bed but never sleeps?',
+    'answer': 'A river',
+  },
+  {
+    'question': 'What has a neck but no head?',
+    'answer': 'A bottle',
+  },
+  {
+    'question': 'What has a heart that doesn\'t beat?',
+    'answer': 'An artichoke',
+  },
+  {
+    'question': 'What has keys but can\'t open locks?',
+    'answer': 'A piano',
+  },
+];
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool showOnboarding = prefs.getBool('showOnboarding') ?? true;
   runApp(RiddleApp(showOnboarding: showOnboarding));
@@ -27,15 +159,18 @@ class RiddleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'My Riddles',
+      title: 'TicktoBrain',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepOrange,
-          brightness: Brightness.light,
+          brightness: Brightness.dark,
           primary: Colors.deepOrange,
           secondary: Colors.deepPurple,
+          surface: Colors.grey[900]!,
+          background: Colors.black,
         ),
+        scaffoldBackgroundColor: Colors.black,
       ),
       home: showOnboarding ? const OnboardingScreen() : const SplashScreen(),
     );
@@ -54,6 +189,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const RiddleHomePage(),
     const RiddlePage(),
+    const DailyChallengeScreen(),
+    RiddleCategoriesScreen(),
     const FavoritesPage(),
     const MorePage(),
   ];
@@ -64,7 +201,7 @@ class _MainScreenState extends State<MainScreen> {
       extendBody: true,
       body: _screens[_currentIndex],
       bottomNavigationBar: CurvedNavigationBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.deepOrange,
         color: Theme.of(context).colorScheme.surface,
         buttonBackgroundColor: Theme.of(context).colorScheme.primary,
         height: 60,
@@ -74,6 +211,8 @@ class _MainScreenState extends State<MainScreen> {
         items: const <Widget>[
           Icon(Icons.home, size: 30),
           Icon(Icons.psychology, size: 30),
+          Icon(Icons.calendar_today, size: 30),
+          Icon(Icons.category, size: 30),
           Icon(Icons.favorite, size: 30),
           Icon(Icons.more_horiz, size: 30),
         ],
@@ -101,7 +240,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, dynamic>> _pages = [
     {
       'icon': Icons.lightbulb,
-      'title': 'Welcome to My Riddles',
+      'title': 'Welcome to TickToBrain',
       'description': 'Get ready to challenge your mind with clever riddles!',
     },
     {
@@ -253,21 +392,11 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..forward();
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainScreen()),
       );
@@ -275,33 +404,45 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Colors.deepPurple.withOpacity(0.8),
-              Colors.black.withOpacity(0.8),
+              Colors.deepPurple,
+              Colors.black,
             ],
           ),
         ),
         child: Center(
-          child: FadeTransition(
-            opacity: _animation,
-            child: const Icon(
-              Icons.psychology,
-              size: 150,
-              color: Colors.white,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.emoji_objects,
+                size: 120,
+                color: Colors.deepOrange,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'TicktoBrain',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      blurRadius: 10.0,
+                      color: Colors.deepOrange.withOpacity(0.5),
+                      offset: const Offset(2.0, 2.0),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -346,8 +487,8 @@ class _RiddleHomePageState extends State<RiddleHomePage>
     return Scaffold(
       extendBodyBehindAppBar: false,
       appBar: AppBar(
-        title: const Text('My Riddles'),
-        backgroundColor: Colors.white,
+        title: const Text('TicktoBrain'),
+        backgroundColor: Colors.deepOrange,
         elevation: 0,
         actions: const [
           // IconButton(
@@ -429,7 +570,7 @@ class _RiddleHomePageState extends State<RiddleHomePage>
                   ),
                 ),
                 child: const Text(
-                  'Start Riddles',
+                  'Start Now!',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -459,136 +600,6 @@ class _RiddlePageState extends State<RiddlePage>
   bool _showAnswer = false;
   int _currentRiddleIndex = 0;
   Set<int> _favoriteRiddles = {};
-
-  final List<Map<String, String>> _riddles = [
-    {
-      'question':
-          'I have a head and a tail that will never meet. Having too many of me is always a treat. What am I?',
-      'answer': 'A coin',
-    },
-    {
-      'question':
-          'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
-      'answer': 'A map',
-    },
-    {
-      'question': 'What has keys but can\'t open locks?',
-      'answer': 'A piano',
-    },
-    {
-      'question': 'What has a heart that doesn\'t beat?',
-      'answer': 'An artichoke',
-    },
-    {
-      'question':
-          'What comes once in a minute, twice in a moment, but never in a thousand years?',
-      'answer': 'The letter M',
-    },
-    {
-      'question': 'What has a neck but no head?',
-      'answer': 'A bottle',
-    },
-    {
-      'question': 'What can travel around the world while staying in a corner?',
-      'answer': 'A stamp',
-    },
-    {
-      'question': 'What has an eye but cannot see?',
-      'answer': 'A needle',
-    },
-    {
-      'question': 'What gets wetter as it dries?',
-      'answer': 'A towel',
-    },
-    {
-      'question': 'What has a thumb and four fingers but is not alive?',
-      'answer': 'A glove',
-    },
-    {
-      'question': 'What has to be broken before you can use it?',
-      'answer': 'An egg',
-    },
-    {
-      'question': 'What has a bed but never sleeps?',
-      'answer': 'A river',
-    },
-    {
-      'question': 'What has a head, a tail, is brown, and has no legs?',
-      'answer': 'A penny',
-    },
-    {
-      'question': 'What has many keys but can\'t open a single lock?',
-      'answer': 'A keyboard',
-    },
-    {
-      'question': 'What has hands but can\'t clap?',
-      'answer': 'A clock',
-    },
-    {
-      'question': 'What has one eye but can\'t see?',
-      'answer': 'A needle',
-    },
-    {
-      'question': 'What has a ring but no finger?',
-      'answer': 'A telephone',
-    },
-    {
-      'question': 'What has a face and two hands but no arms or legs?',
-      'answer': 'A clock',
-    },
-    {
-      'question': 'What has a bottom at the top?',
-      'answer': 'A leg',
-    },
-    {
-      'question': 'What has teeth but can\'t bite?',
-      'answer': 'A comb',
-    },
-    {
-      'question': 'What has words but never speaks?',
-      'answer': 'A book',
-    },
-    {
-      'question': 'What has a spine but no bones?',
-      'answer': 'A book',
-    },
-    {
-      'question': 'What has a bark but no bite?',
-      'answer': 'A tree',
-    },
-    {
-      'question': 'What has a foot but no legs?',
-      'answer': 'A ruler',
-    },
-    {
-      'question': 'What has a face but no eyes, nose, or mouth?',
-      'answer': 'A clock',
-    },
-    {
-      'question': 'What has a head, a tail, is brown, and has no legs?',
-      'answer': 'A penny',
-    },
-    {
-      'question': 'What has a ring but no finger?',
-      'answer': 'A telephone',
-    },
-    {
-      'question': 'What has a bed but never sleeps?',
-      'answer': 'A river',
-    },
-    {
-      'question': 'What has a neck but no head?',
-      'answer': 'A bottle',
-    },
-    {
-      'question': 'What has a heart that doesn\'t beat?',
-      'answer': 'An artichoke',
-    },
-    {
-      'question': 'What has keys but can\'t open locks?',
-      'answer': 'A piano',
-    },
-  ];
 
   @override
   void initState() {
@@ -653,7 +664,7 @@ class _RiddlePageState extends State<RiddlePage>
       extendBodyBehindAppBar: false,
       appBar: AppBar(
         title: const Text('Riddle'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.deepOrange,
         elevation: 0,
       ),
       body: Container(
@@ -737,17 +748,17 @@ class MorePage extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 200.0,
+          const SliverAppBar(
+            expandedHeight: 5.0,
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              // title: const Text('More Options'),
-              background: Image.asset(
-                'assets/images/playstore.png',
-                fit: BoxFit.scaleDown,
-              ),
-            ),
+                // title: const Text('More Options'),
+                // background: Image.asset(
+                //   'assets/images/playstore.png',
+                //   fit: BoxFit.scaleDown,
+                // ),
+                ),
           ),
           SliverList(
             delegate: SliverChildListDelegate([
@@ -781,7 +792,7 @@ class MorePage extends StatelessWidget {
                 color: Colors.orange,
                 onTap: () {
                   Share.share(
-                    'Download My Riddles app from Playstore: https://play.google.com/store/apps/details?id=com.example.my_riddles',
+                    'Download TicktoBrain app from Playstore: https://play.google.com/store/apps/details?id=com.ticktobrain.app',
                   );
                 },
               ),
@@ -792,7 +803,7 @@ class MorePage extends StatelessWidget {
                 subtitle: 'Rate us on Playstore',
                 color: Colors.red,
                 onTap: () => launchUrlString(
-                  'https://play.google.com/store/apps/details?id=com.example.my_riddles',
+                  'https://play.google.com/store/apps/details?id=com.ticktobrain.app',
                 ),
               ),
               _buildCard(
@@ -880,7 +891,10 @@ class AboutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(
+        title: const Text('About'),
+        backgroundColor: Colors.deepOrange,
+      ),
       body: const SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.all(16.0),
@@ -888,7 +902,7 @@ class AboutPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'My Riddles',
+                'TicktoBrain',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -986,12 +1000,15 @@ class AboutPage extends StatelessWidget {
 class PrivacyPolicyPage extends StatelessWidget {
   PrivacyPolicyPage({super.key});
 
-  String url = 'https://www.example.com/privacy-policy';
+  String url = 'https://sites.google.com/view/riddlesapps/home';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy Policy')),
+      appBar: AppBar(
+        title: const Text('Privacy Policy'),
+        backgroundColor: Colors.deepOrange,
+      ),
       body: WebViewWidget(
           controller: WebViewController()
             ..loadRequest(Uri.parse(url))
@@ -1009,135 +1026,6 @@ class FavoritesPage extends StatefulWidget {
 
 class _FavoritesPageState extends State<FavoritesPage> {
   Set<int> _favoriteRiddles = {};
-  final List<Map<String, String>> _riddles = [
-    {
-      'question':
-          'I have a head and a tail that will never meet. Having too many of me is always a treat. What am I?',
-      'answer': 'A coin',
-    },
-    {
-      'question':
-          'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
-      'answer': 'A map',
-    },
-    {
-      'question': 'What has keys but can\'t open locks?',
-      'answer': 'A piano',
-    },
-    {
-      'question': 'What has a heart that doesn\'t beat?',
-      'answer': 'An artichoke',
-    },
-    {
-      'question':
-          'What comes once in a minute, twice in a moment, but never in a thousand years?',
-      'answer': 'The letter M',
-    },
-    {
-      'question': 'What has a neck but no head?',
-      'answer': 'A bottle',
-    },
-    {
-      'question': 'What can travel around the world while staying in a corner?',
-      'answer': 'A stamp',
-    },
-    {
-      'question': 'What has an eye but cannot see?',
-      'answer': 'A needle',
-    },
-    {
-      'question': 'What gets wetter as it dries?',
-      'answer': 'A towel',
-    },
-    {
-      'question': 'What has a thumb and four fingers but is not alive?',
-      'answer': 'A glove',
-    },
-    {
-      'question': 'What has to be broken before you can use it?',
-      'answer': 'An egg',
-    },
-    {
-      'question': 'What has a bed but never sleeps?',
-      'answer': 'A river',
-    },
-    {
-      'question': 'What has a head, a tail, is brown, and has no legs?',
-      'answer': 'A penny',
-    },
-    {
-      'question': 'What has many keys but can\'t open a single lock?',
-      'answer': 'A keyboard',
-    },
-    {
-      'question': 'What has hands but can\'t clap?',
-      'answer': 'A clock',
-    },
-    {
-      'question': 'What has one eye but can\'t see?',
-      'answer': 'A needle',
-    },
-    {
-      'question': 'What has a ring but no finger?',
-      'answer': 'A telephone',
-    },
-    {
-      'question': 'What has a face and two hands but no arms or legs?',
-      'answer': 'A clock',
-    },
-    {
-      'question': 'What has a bottom at the top?',
-      'answer': 'A leg',
-    },
-    {
-      'question': 'What has teeth but can\'t bite?',
-      'answer': 'A comb',
-    },
-    {
-      'question': 'What has words but never speaks?',
-      'answer': 'A book',
-    },
-    {
-      'question': 'What has a spine but no bones?',
-      'answer': 'A book',
-    },
-    {
-      'question': 'What has a bark but no bite?',
-      'answer': 'A tree',
-    },
-    {
-      'question': 'What has a foot but no legs?',
-      'answer': 'A ruler',
-    },
-    {
-      'question': 'What has a face but no eyes, nose, or mouth?',
-      'answer': 'A clock',
-    },
-    {
-      'question': 'What has a head, a tail, is brown, and has no legs?',
-      'answer': 'A penny',
-    },
-    {
-      'question': 'What has a ring but no finger?',
-      'answer': 'A telephone',
-    },
-    {
-      'question': 'What has a bed but never sleeps?',
-      'answer': 'A river',
-    },
-    {
-      'question': 'What has a neck but no head?',
-      'answer': 'A bottle',
-    },
-    {
-      'question': 'What has a heart that doesn\'t beat?',
-      'answer': 'An artichoke',
-    },
-    {
-      'question': 'What has keys but can\'t open locks?',
-      'answer': 'A piano',
-    },
-  ];
 
   @override
   void initState() {
@@ -1167,7 +1055,7 @@ class _FavoritesPageState extends State<FavoritesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Favorite Riddles'),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.deepOrange,
         elevation: 0,
       ),
       body: Container(
@@ -1212,6 +1100,350 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     ),
                   );
                 },
+              ),
+      ),
+    );
+  }
+}
+
+class RiddleCategoriesScreen extends StatelessWidget {
+  RiddleCategoriesScreen({super.key});
+
+  final Map<String, List<Map<String, String>>> _categories = {
+    'Easy': [
+      {'question': 'What has keys but no locks?', 'answer': 'A piano'},
+      {
+        'question': 'What has a face and two hands but no arms or legs?',
+        'answer': 'A clock'
+      },
+      {'question': 'What has an eye but cannot see?', 'answer': 'A needle'},
+    ],
+    'Medium': [
+      {
+        'question':
+            'I have cities, but no houses. I have mountains, but no trees. I have water, but no fish. What am I?',
+        'answer': 'A map'
+      },
+      {
+        'question':
+            'What comes once in a minute, twice in a moment, but never in a thousand years?',
+        'answer': 'The letter M'
+      },
+      {
+        'question': 'What has a head and a tail that will never meet?',
+        'answer': 'A coin'
+      },
+    ],
+    'Hard': [
+      {
+        'question':
+            'I am not alive, but I grow; I don\'t have lungs, but I need air; I don\'t have a mouth, but water kills me. What am I?',
+        'answer': 'Fire'
+      },
+      {
+        'question':
+            'I have keys, but no locks. I have space, but no room. You can enter, but not go in. What am I?',
+        'answer': 'A keyboard'
+      },
+      {
+        'question': 'The more you take, the more you leave behind. What am I?',
+        'answer': 'Footsteps'
+      },
+    ],
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Riddle Categories'),
+        backgroundColor: Colors.deepOrange,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.deepPurple.withOpacity(0.8),
+              Colors.black.withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: ListView.builder(
+          itemCount: _categories.length,
+          itemBuilder: (context, index) {
+            String category = _categories.keys.elementAt(index);
+            IconData categoryIcon;
+            Color categoryColor;
+
+            switch (category) {
+              case 'Easy':
+                categoryIcon = Icons.sentiment_satisfied;
+                categoryColor = Colors.green;
+                break;
+              case 'Medium':
+                categoryIcon = Icons.sentiment_neutral;
+                categoryColor = Colors.orange;
+                break;
+              case 'Hard':
+                categoryIcon = Icons.sentiment_very_dissatisfied;
+                categoryColor = Colors.red;
+                break;
+              default:
+                categoryIcon = Icons.category;
+                categoryColor = Colors.blue;
+            }
+
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Colors.white.withOpacity(0.1),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: categoryColor,
+                  child: Icon(categoryIcon, color: Colors.white),
+                ),
+                title: Text(
+                  category,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '${_categories[category]!.length} riddles',
+                  style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                ),
+                trailing:
+                    const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RiddleCategoryPage(
+                        category: category,
+                        riddles: _categories[category]!,
+                        categoryColor: categoryColor,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class RiddleCategoryPage extends StatefulWidget {
+  final String category;
+  final List<Map<String, String>> riddles;
+  final Color categoryColor;
+
+  const RiddleCategoryPage({
+    super.key,
+    required this.category,
+    required this.riddles,
+    required this.categoryColor,
+  });
+
+  @override
+  _RiddleCategoryPageState createState() => _RiddleCategoryPageState();
+}
+
+class _RiddleCategoryPageState extends State<RiddleCategoryPage> {
+  List<bool> _showAnswers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _showAnswers = List.generate(widget.riddles.length, (_) => false);
+  }
+
+  void _toggleAnswer(int index) {
+    setState(() {
+      _showAnswers[index] = !_showAnswers[index];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.category),
+        backgroundColor: widget.categoryColor,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              widget.categoryColor.withOpacity(0.8),
+              Colors.black.withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: ListView.builder(
+          itemCount: widget.riddles.length,
+          itemBuilder: (context, index) {
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Colors.white.withOpacity(0.1),
+              child: ExpansionTile(
+                title: Text(
+                  widget.riddles[index]['question']!,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _showAnswers[index]
+                                ? widget.riddles[index]['answer']!
+                                : 'Tap to reveal answer',
+                            style: TextStyle(
+                              color: _showAnswers[index]
+                                  ? Colors.white
+                                  : Colors.white.withOpacity(0.5),
+                              fontSize: 14,
+                              fontStyle: _showAnswers[index]
+                                  ? FontStyle.normal
+                                  : FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            _showAnswers[index]
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => _toggleAnswer(index),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class DailyChallengeScreen extends StatefulWidget {
+  const DailyChallengeScreen({super.key});
+
+  @override
+  _DailyChallengeScreenState createState() => _DailyChallengeScreenState();
+}
+
+class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
+  Map<String, String>? _dailyRiddle;
+  bool _showAnswer = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDailyRiddle();
+  }
+
+  Future<void> _loadDailyRiddle() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String today = DateTime.now().toIso8601String().split('T')[0];
+    String? lastDate = prefs.getString('lastDailyRiddleDate');
+
+    if (lastDate != today) {
+      // New day, new riddle
+      _dailyRiddle = _getRandomRiddle();
+      await prefs.setString('lastDailyRiddleDate', today);
+      await prefs.setString('dailyRiddle', json.encode(_dailyRiddle));
+    } else {
+      // Load saved daily riddle
+      String? savedRiddle = prefs.getString('dailyRiddle');
+      if (savedRiddle != null) {
+        _dailyRiddle = Map<String, String>.from(json.decode(savedRiddle));
+      } else {
+        _dailyRiddle = _getRandomRiddle();
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Map<String, String> _getRandomRiddle() {
+    final random = Random();
+    return _riddles[random.nextInt(_riddles.length)];
+  }
+
+  void _toggleAnswer() {
+    setState(() {
+      _showAnswer = !_showAnswer;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Daily Challenge'),
+        backgroundColor: Colors.deepOrange,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.deepPurple.withOpacity(0.8),
+              Colors.black.withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _dailyRiddle?['question'] ?? 'No riddle available',
+                        style:
+                            const TextStyle(fontSize: 24, color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 40),
+                      ElevatedButton(
+                        onPressed: _toggleAnswer,
+                        child:
+                            Text(_showAnswer ? 'Hide Answer' : 'Show Answer'),
+                      ),
+                      const SizedBox(height: 20),
+                      if (_showAnswer)
+                        Text(
+                          _dailyRiddle?['answer'] ?? 'No answer available',
+                          style: const TextStyle(
+                              fontSize: 20, color: Colors.white70),
+                        ),
+                    ],
+                  ),
+                ),
               ),
       ),
     );

@@ -1,4 +1,4 @@
-package com.example.riddles_app
+package com.ticktobrain.app
 
 import io.flutter.embedding.android.FlutterActivity
 
